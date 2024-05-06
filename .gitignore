@@ -1,2 +1,4 @@
 # .gitignore content
 .env
+__pycache__
+.DS_Store

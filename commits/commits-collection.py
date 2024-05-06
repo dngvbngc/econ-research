@@ -54,11 +54,11 @@ def fetch_commit_files(commit_url, token):
 commits = fetch_commits(owner, repo, token)
 
 # Write commits and file changes to CSV
-filename = 'commits-' + repo + '.csv'
+filename = 'data/commits-' + repo + '.csv'
 
 with open(filename, mode='w', newline='', encoding='utf-8') as file:
     writer = csv.writer(file)
-    writer.writerow(['Name', 'Email', 'Time', 'Message', 'File Changes'])
+    writer.writerow(['Name', 'Email', 'Time', 'Message', 'File Changed', 'Additions', 'Deletion'])
 
     for commit in commits:
         name = commit['commit']['committer']['name']
@@ -68,7 +68,10 @@ with open(filename, mode='w', newline='', encoding='utf-8') as file:
         commit_files = fetch_commit_files(commit['url'], token)
 
         # Convert file changes list to JSON string for CSV output
-        file_changes_str = json.dumps(commit_files)
-        writer.writerow([name, email, time, message, file_changes_str])
+        for file in commit_files:
+            filename = file['filename']
+            additions = file['additions']
+            deletions = file['deletions']
+            writer.writerow([name, email, time, message, filename, additions, deletions])
 
 print(f"Commits and file changes have been written to {filename}")

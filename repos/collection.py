@@ -1,10 +1,8 @@
 import requests
-import time
+import csv
 import os
 
-# Constants
-GITHUB_API = "https://api.github.com/search/repositories"
-
+# Replace 'your_token_here' with your GitHub personal access token
 # Accessing the GitHub token from environment variables
 token = os.getenv('GITHUB_TOKEN')
 if token is None:
@@ -12,42 +10,64 @@ if token is None:
 else:
     print("Token found")
 
-HEADERS = {"Authorization": f"token {token}"}
-PARAMS = {
-    "q": "forks:>300 created:>2022-01-01",  # Adjust date as needed
-    "sort": "forks",
-    "order": "desc",
-    "per_page": 100  # Max items per page
+GITHUB_API_URL = 'https://api.github.com/search/repositories'
+
+# Headers for authentication
+headers = {
+    'Authorization': f'token {token}',
+    'Accept': 'application/vnd.github.v3+json'
 }
 
-def get_repos(page):
-    """Fetch repositories from GitHub API."""
-    params = PARAMS.copy()
-    params['page'] = page
-    response = requests.get(GITHUB_API, headers=HEADERS, params=params)
-    if response.status_code == 200:
-        return response.json()['items']
-    else:
-        print(f"Failed to fetch data: {response.status_code}")
-        return []
-
-def main():
-    all_repos = []
+def fetch_repositories(start_date, end_date):
+    repositories = []
     page = 1
-    while len(all_repos) < 30:
-        repos = get_repos(page)
+    query_params = {
+        'q': f'forks:>1000 created:{start_date}..{end_date}',
+        'sort': 'forks',
+        'order': 'desc',
+        'per_page': 100
+    }
+
+    while True:
+        query_params['page'] = page
+        response = requests.get(GITHUB_API_URL, headers=headers, params=query_params)
+        response_json = response.json()
+        repos = response_json.get('items', [])
+
         if not repos:
             break
-        all_repos.extend(repos)
+
+        for repo in repos:
+            repositories.append({
+                'name': repo['name'],
+                'created_at': repo['created_at'],
+                'forks': repo['forks_count'],
+                'topics': repo['topics']
+            })
+
         page += 1
-        time.sleep(10)  # To respect rate limits
 
-    # Sort repos by number of forks (if needed)
-    all_repos.sort(key=lambda r: r['forks_count'], reverse=True)
+    return repositories
 
-    # Extract and print required data
-    for repo in all_repos[:3000]:
-        print(repo['full_name'], repo['forks_count'])
+def write_to_csv(repositories, filename):
+    with open(filename, 'w', newline='', encoding='utf-8') as file:
+        writer = csv.DictWriter(file, fieldnames=['name', 'created_at', 'forks', 'topics'])
+        writer.writeheader()
+        for repo in repositories:
+            writer.writerow(repo)
 
-if __name__ == "__main__":
+def main():
+    # Query for each year and combine the results
+    all_repositories = []
+    for i in range(2007, 2024):
+        repositories = fetch_repositories(str(i) + '-01-01', str(i) + '-12-31')
+        all_repositories += repositories
+
+    # Sort the repositories by number of forks
+    all_repositories.sort(key=lambda x: x['forks'], reverse=True)
+
+    # Write to CSV
+    write_to_csv(all_repositories, 'github_repos.csv')
+
+if __name__ == '__main__':
     main()

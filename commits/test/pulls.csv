@@ -1,0 +1,84 @@
+number,user,body,state,merge_at,merge_sha
+1492,vmoroz,"Fix PR fixes compilation errors and warnings while compiling code in VS 2022.
+- async_worker.cc used deprecated `std::allocator` APIs. Their use is is replaced with APIs that is still valid.
+- There was a strange error in `ObjectWrap<T>::WrappedMethod`. It was saying that `&` operation requires an l-value. The issue is fixed by copying `method` pointer to a local variable before invocation.
+- VS identified that some fields were not initialized. They are changed to initialize with `{}`.
+- VS identified that some functions must be `noexcept`. They are augmented with `NAPI_NOEXCEPT`.
+",open,,88f8630ea7e460416beaba9986b6fae81b06cb2a
+1479,lovell,"This PR contains a proposal to expose the package `version` property in the public API.
+
+The `version` value is already used by the conversion tooling and is additionally useful in external contexts too, for example when specifying/detecting `node-addon-api` as an optional and/or peer dependency.
+
+This would bring `node-addon-api` in line with `node-gyp`, which already exports `require('node-gyp').version`. The change in the PR will allow me to improve the install-time detecting/logging for `node-addon-api` within `sharp`.
+
+It also adds a test with expectations for this property as well as all existing exported properties.
+
+<!--
+Before submitting a pull request, please read
+https://github.com/nodejs/node-addon-api/blob/main/CONTRIBUTING.md.
+
+Developer's Certificate of Origin 1.1
+
+By making a contribution to this project, I certify that:
+
+(a) The contribution was created in whole or in part by me and I
+    have the right to submit it under the open source license
+    indicated in the file; or
+
+(b) The contribution is based upon previous work that, to the best
+    of my knowledge, is covered under an appropriate open source
+    license and I have the right under that license to submit that
+    work with modifications, whether created in whole or in part
+    by me, under the same open source license (unless I am
+    permitted to submit under a different license), as indicated
+    in the file; or
+
+(c) The contribution was provided directly to me by some other
+    person who certified (a), (b) or (c) and I have not modified
+    it.
+
+(d) I understand and agree that this project and the contribution
+    are public and that a record of the contribution (including all
+    personal information I submit with it, including my sign-off) is
+    maintained indefinitely and may be redistributed consistent with
+    this project or the open source license(s) involved.
+-->
+",open,,6b5994eddcdb65c6c1ba607068c94a1eb5cc2bb8
+1409,gabrielschulhof,"Since we made the default for Node.js core finalizers synchronous for users running with `NAPI_EXPERIMENTAL` and introduced `env->CheckGCAccess()` in Node.js core, we must now defer all finalizers in node-addon-api, because our users likely make non-gc-safe Node-API calls from existing finalizers. To that end,
+
+  * Use the NAPI_VERSION environment variable to detect whether `NAPI_EXPERIMENTAL` should be on, and add it to the defines if `NAPI_VERSION` is set to `NAPI_VERSION_EXPERIMENTAL`, i.e. 2147483647.
+  * When building with `NAPI_EXPERIMENTAL`,
+    * render all finalizers asynchronous, and
+    * expect `napi_cannot_run_js` instead of `napi_exception_pending`.
+
+<!--
+Before submitting a pull request, please read
+https://github.com/nodejs/node-addon-api/blob/main/CONTRIBUTING.md.
+
+Developer's Certificate of Origin 1.1
+
+By making a contribution to this project, I certify that:
+
+(a) The contribution was created in whole or in part by me and I
+    have the right to submit it under the open source license
+    indicated in the file; or
+
+(b) The contribution is based upon previous work that, to the best
+    of my knowledge, is covered under an appropriate open source
+    license and I have the right under that license to submit that
+    work with modifications, whether created in whole or in part
+    by me, under the same open source license (unless I am
+    permitted to submit under a different license), as indicated
+    in the file; or
+
+(c) The contribution was provided directly to me by some other
+    person who certified (a), (b) or (c) and I have not modified
+    it.
+
+(d) I understand and agree that this project and the contribution
+    are public and that a record of the contribution (including all
+    personal information I submit with it, including my sign-off) is
+    maintained indefinitely and may be redistributed consistent with
+    this project or the open source license(s) involved.
+-->
+",open,,aa6d6fcdbf89c29f02f44b1aed0cd156ddd1f4b2

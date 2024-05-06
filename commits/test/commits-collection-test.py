@@ -1,7 +1,5 @@
 import requests
 import csv
-import json
-from datetime import datetime
 import os
 
 # GitHub repository details
@@ -53,20 +51,19 @@ def fetch_commit_files(commit_url, token):
 # Fetch commits
 commits = fetch_commits(owner, repo, token)
 
-# Write commits and file changes to CSV
-with open('commits.csv', mode='w', newline='', encoding='utf-8') as file:
+# Write commits to CSV
+with open('commits2.csv', mode='w', newline='', encoding='utf-8') as file:
     writer = csv.writer(file)
-    writer.writerow(['Name', 'Email', 'Time', 'Message', 'File Changes'])
+    writer.writerow(['SHA', 'Author', 'Committer', 'Time', 'Message', 'Parents', 'Files'])
 
     for commit in commits:
-        name = commit['commit']['committer']['name']
-        email = commit['commit']['committer']['email']
+        sha = commit['sha']
+        author = commit['commit']['author']['name']
+        committer = commit['commit']['committer']['name']
         time = commit['commit']['committer']['date']
         message = commit['commit']['message']
-        commit_files = fetch_commit_files(commit['url'], token)
+        parents = '| '.join([parent['sha'] for parent in commit['parents']])
+        files = commit_files = fetch_commit_files(commit['url'], token)
+        writer.writerow([sha, author, committer, time, message, parents, files])
 
-        # Convert file changes list to JSON string for CSV output
-        file_changes_str = json.dumps(commit_files)
-        writer.writerow([name, email, time, message, file_changes_str])
-
-print("Commits and file changes have been written to commits.csv")
+print("Commits have been written to file")

@@ -1,0 +1,24 @@
+import pandas as pd
+from wordcloud import WordCloud
+import matplotlib.pyplot as plt
+
+# Read the CSV file
+df = pd.read_csv('data/commits-node-addon-api.csv')
+
+# Extract keywords and create a single string
+# Assuming topics are stored as string representations of lists
+all_keywords = ' '.join(df['Message'].dropna().tolist())
+all_keywords = all_keywords.replace('[', '').replace(']', '').replace('\'', '').replace(',', '')
+
+# Create a WordCloud object
+wordcloud = WordCloud(width = 800, height = 800, 
+                background_color ='white', 
+                min_font_size = 10).generate(all_keywords)
+
+# Plot the WordCloud image                        
+plt.figure(figsize = (8, 8), facecolor = None) 
+plt.imshow(wordcloud) 
+plt.axis("off") 
+plt.tight_layout(pad = 0) 
+  
+plt.show()

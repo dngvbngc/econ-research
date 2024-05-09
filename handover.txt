@@ -1,0 +1,101 @@
+Code & database: https://github.com/dngvbngc/econ-research
+
+Challenges:
+- API rate limiting: 5,000 requests per hour
+
+1. Collection of Github repos & Categorization
+
+Currently, we have collected 9393 public repos since 2007 (creation of Github) with more than 1000 forks. If there are no bugs in the collection code, this should be all repos that fit the criteria.
+
+Among these repos, we also collect the topic tags for categorization. We made a word cloud of the most popular tags and categorize the repos based on the most popular tags. Current categories (see keywords-category.py)
+
+keyword_categories = {
+    'beginner': 'Beginner',
+    'beginner-friendly': 'Beginner',
+    'tutorial': 'Beginner',
+    'tutorials': 'Beginner',
+    'web-programming': 'Web/Mobile Development',
+    'machine-learning': 'Machine Learning',
+    'ml': 'Machine Learning',
+    'ai': 'Machine Learning',
+    'gpt': 'Machine Learning',
+    'chatgpt': 'Machine Learning',
+    'gemini': 'Machine Learning',
+    'internet-of-things': 'Internet of Things',
+    'oauth2': 'Internet of Things',
+    'smartapp': 'Internet of Things',
+    'smartthings': 'Internet of Things',
+    'upnp': 'Internet of Things',
+    'zigbee': 'Internet of Things',
+    'zwave': 'Internet of Things',
+    'bootstrap': 'Web/Mobile Development',
+    'css': 'Web/Mobile Development',
+    'css-framework': 'Web/Mobile Development',
+    'html': 'Web/Mobile Development',
+    'html5': 'Web/Mobile Development',
+    'javascript': 'Web/Mobile Development',
+    'sass': 'Web/Mobile Development',
+    'scss': 'Web/Mobile Development',
+    'vue': 'Web/Mobile Development',
+    'vue3': 'Web/Mobile Development',
+    'react': 'Web/Mobile Development',
+    'nodejs': 'Web/Mobile Development',
+    'node': 'Web/Mobile Development',
+    'expressjs': 'Web/Mobile Development',
+    'django': 'Web/Mobile Development',
+    'docker': 'Web/Mobile Development',
+    'sdk': 'Web/Mobile Development',
+    'server': 'Web/Mobile Development',
+    'azure': 'Web/Mobile Development',
+    'aspnet': 'Web/Mobile Development',
+    'kubernetes': 'Web/Mobile Development',
+    'spring-boot': 'Web/Mobile Development',
+    'spring': 'Web/Mobile Development',
+    'swift': 'Web/Mobile Development',
+    'angular': 'Web/Mobile Development',
+    'deep-learning': 'Machine Learning',
+    'deep-neural-networks': 'Machine Learning',
+    'langchain': 'Machine Learning',
+    'tensorflow': 'Machine Learning',
+    'website': 'Web/Mobile Development',
+    'webapp': 'Web/Mobile Development',
+    'web': 'Web/Mobile Development',
+    'app': 'Web/Mobile Development',
+    'flask': 'Web/Mobile Development',
+    'oracle': 'Web/Mobile Development',
+    'image-generation': 'Machine Learning',
+    'image2image': 'Machine Learning',
+    'imagenet': 'Machine Learning',
+    'data-mining': 'Machine Learning',
+    'cloud': 'Cloud Computing',
+    'cloud-computing': 'Cloud Computing',
+    'aws': 'Cloud Computing',
+    'terraform': 'Cloud Computing',
+    'flutter': 'Web/Mobile Development',
+    'generation': 'Machine Learning',
+    'data': 'Data'
+}
+
+For the last iteration, I added data and cloud computing because among less-popular keywords, they seem to be the most popular. Unsure whether to group cloud computing with web/mobile development. Untagged repos are "Unspecified", and tagged repos with no matched keywords are "Others".
+
+There is also categorization by programming language (Python, JS, etc) using topic tags. 
+
+Plots: See plots in repos/plot. Note that there is a downward trend in number of repos around 2016. This might be because newer repos have less time to gather forks. For further data analysis, you might want to consider the implication of this.
+
+2. Collection of commits from a repo & Categorization
+
+We collected all logged commits from nodejs/node-addon-api. The reason for choosing this repo over others is because it currently has around 800 commits, so we don't get rate-limited by Github API. 
+
+We are looking at 2 ways to categorize the commits:
+- By time of commit: During/ Outside work hour. This is to study whether recent layoffs have shifted working habits of developers, in line with one of the papers found. The categorization is currently very preliminary:
++ We know the company is located in San Francisco, so we convert the time of commits into the local timezone. 
++ Commits happening between 9-5 are categorized as during work hours. **Note**: Not adjusted for daylight saving yet.
+
+- By task: The goal is to provide an overview of the developers' activities over a week/year.
++ Ideally, we would have a time series plot and lines for each category of task (e.g. development, test, maintenance). 
++ Currently, we can safely remove commits initiated by bots by filtering out the author name column. 
++ Our current goal is to identify which commit is a merge of a PR into main to avoid repetition (the same file content change is logged once as a commit, and another time when it's merged into main). Also identifying the merge commits will be beneficial for categorizing tasks such as code review.
++ Challenges: Here are some ways to do that without using additional API calls I've looked at:
+1. Analyze commit messages: Usually, to identify that a PR was merged into the main branch, we can use the commit message because there would be a default line like "Merge PR #123 into main". However, for the repo we are using, I think they deleted this line for some commit messages, so there are only 23 such commits with that line in the message as of right now (which I think is far from the actual number of merge commits).
+2. Analyze the author vs committer: For a merge commit of a PR into the main branch, the author would be the person who wrote the code, and the committer would be GitHub (see attached commits2.csv file for a sample). However, if a person did not make changes on their local computer via an IDE but on the online GitHub code editor, we would also have the person's name as the author and the committer as GitHub. Therefore, a simple filter using author/committer's name would not work.
++ Current solution: Select only 1 week's worth of data. Query the PR API endpoints on commits that has a PR-URL in the message. 
